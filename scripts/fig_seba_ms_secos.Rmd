@@ -1,0 +1,125 @@
+---
+title: "Figuras Seba Martel"
+author: "Camila Vargas"
+date: "3/27/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+library(patchwork)
+```
+
+
+## Raw Data
+```{r}
+raw_data_ee <- read_excel("data/martel_ms_secos.xlsx", sheet = "data_ee")
+
+raw_data_ds <- raw_data_ee <- read_excel("data/martel_ms_secos.xlsx", sheet = "data_ds")
+```
+
+## Datos ordenados
+
+```{r}
+data_long <- raw_data_ee %>% 
+  pivot_longer(cols = 3:4,
+               names_to = "co2",
+               values_to = "value") %>% 
+  select(variable, temp, co2, value, everything()) %>% 
+  pivot_longer(cols = 5:6,
+               names_to = "error_co2",
+               values_to = "error")
+
+ppm_500 <- data_long %>% 
+  filter(co2 == "500 ppm" & error_co2 == "ee 500")
+
+ppm_1500 <- data_long %>% 
+  filter(co2 == "1500 ppm" & error_co2 == "ee1500")
+  
+
+data_clean <- bind_rows(ppm_500, ppm_1500) %>% 
+  select(-error_co2) %>% 
+  mutate(temp = as.factor(temp),
+         co2 = fct_relevel(co2, c("500 ppm", "1500 ppm")),
+         e_min = value-error,
+         e_max = value+error)
+
+```
+
+
+## Plots
+
+```{r}
+
+## Colors
+blanco <- "#FFFFFF"
+negro <- "#000000"
+gris <- "#696969"
+
+
+gr_plot <- data_clean %>% 
+         filter(variable == "Growth rate") %>% 
+ggplot(aes(x = co2, 
+           y = value, 
+           fill = temp))+
+  geom_bar(stat = "identity",
+           position = "dodge",
+           color="black")+
+  geom_errorbar(aes(ymin = e_min, 
+                    ymax = e_max), width=.2,
+                 position=position_dodge(.9))+
+  # scale_fill_grey()+
+  scale_fill_manual(values = c(gris, blanco))+
+  theme_bw()+
+  ylab("Growth Rate (mg)")+
+  xlab(expression(CO[2]~concentration)) ##what ever is in {} is a superscripts (for subscripts use[]))
+
+
+
+met_plot <- data_clean %>% 
+         filter(variable == "Met") %>% 
+ggplot(aes(x = co2, 
+           y = value, 
+           fill = temp))+
+  geom_bar(stat = "identity",
+           position = "dodge",
+           color="black")+
+  geom_errorbar(aes(ymin = e_min, 
+                    ymax = e_max), width=.2,
+                 position=position_dodge(.9))+
+  # scale_fill_grey()+
+  scale_fill_manual(values = c(gris, blanco))+
+  theme_bw()+
+  ylab(expression(Metabolism~(~mgO[2]*h*g^{-1})))+
+  xlab(expression(CO[2]~concentration)) ##what ever is in {} is a superscripts (for subscripts use[]))
+
+
+shell_plot <- data_clean %>% 
+         filter(variable == "Shell Diss") %>% 
+ggplot(aes(x = co2, 
+           y = value, 
+           fill = temp))+
+  geom_bar(stat = "identity",
+           position = "dodge",
+           color="black")+
+  geom_errorbar(aes(ymin = e_min, 
+                    ymax = e_max), width=.2,
+                 position=position_dodge(.9))+
+  # scale_fill_grey()+
+  scale_fill_manual(values = c(gris, blanco))+
+  theme_bw()+
+  ylab(expression(Shell~dissolution~rate~(~µg~per~mussel~d^{-1})))+
+  xlab(expression(CO[2]~concentration)) ##what ever is in {} is a superscripts (for subscripts use[]))
+
+
+## Usando el paquete patchwork
+all_plots <- gr_plot + met_plot + shell_plot
+
+```
+
+
+
+
