@@ -1,0 +1,41 @@
+---
+title: "Cleaning Survey 123 - Phase 2 Data"
+author: "Camila Vargas"
+date: '2022-06-15'
+output: html_document
+---
+
+-   **Project Name:** Mendocino Kelp Forest Restoration
+
+-   **Client:** The Nature Conservancy
+
+-   **Data:** Downloaded from [TNC Box Folder](https://tnc.app.box.com/s/1v8o6ki6ln0arqw0prjsalrxmxlnaitc) on June 2022 (Winter and Srping data).
+
+-   **Goal:**
+
+    -   Clean and QC Survey 123 Phase 2 data.
+
+## Set up
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## Load packages
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(here)
+library(freeR)
+library(readxl)
+library(snakecase)
+library(measurements)
+
+## Source R script
+source("R/qc_functions.R")
+
+## Set directory paths
+dir_data <- here("raw_data")
+
+
+```
+

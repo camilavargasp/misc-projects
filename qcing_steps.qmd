@@ -1,0 +1,63 @@
+---
+title: "QC_steps"
+format: html
+editor: visual
+---
+
+## Tools for Identifying Errors in your data using R
+
+```{r}
+
+## Check structure of your data
+utils::str(data)
+
+## Examine columns content
+base::unique(data$col_name)
+base::sort(unique(data$col_name))
+
+## Examin factors column contents
+base::levels(data$col_name)
+
+## Identify numeric ranges
+base::range(data$col_name)
+
+## Counting NAs in each column
+base::summary(data)
+plyr::count(is.na(data$col_name))
+freeR::complete(data)
+
+```
+
+```{r}
+
+## AVOID - Most of the errors in your data are not detectable to human eye
+
+utils::View(data)
+
+
+```
+
+## Tools for **Resolving** Errors in R
+
+```{r}
+
+## Conditionally implement changes
+base::ifelse()
+dplyr::case_when()
+
+## Unconditional string replacement
+## used with 
+    dplyr::mutate()
+dplyr::recode() 
+stringr::str_replace()    
+base::gsub()
+
+## Diagnose typos in numeric column
+helpR::num_chk()
+
+## Diagnose typos in multiple numeric columns 
+helpR::multi_num_chk()
+
+
+
+```

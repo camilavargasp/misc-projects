@@ -1,0 +1,88 @@
+---
+title: "Discards Proportion Data"
+author: "Camila Vargas"
+date: "3/27/2022"
+output: html_document
+---
+
+Can we estimate how much Blue Shark gets disccarded at sea based on the Third Assesment of Discards data?
+
+Things to consider:
+- The MLE model used for the third assessment calculates discards per fishery and not per species. This means we can calculate discards per flag and gear but not at a species level.
+- On the other hand, we know the percentage of each FAO species going into each fishery (this and the point above are based on average landing data from 2010 to 2014)
+Assuming that the proportion of discard/landing for each fishery is the same for each species considered in a fishery, I think we could calculate the discard per species(by flag and gear type) using the fishery ration of discard/landing. I'm not sure if this is a valid assumption though. 
+- With this method, we can only calculate discards for the species considered in the Third assessment. This probably includes most blue sharks; however, there might be discrepancies with recent data. 
+
+## Set-up
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+library(janitor)
+
+```
+
+
+## Read data
+```{r}
+discard_data_url <- "https://raw.githubusercontent.com/bkuczenski/scoping-gear-losses/main/data/perez-roda_discards/fao_elg_landdisc.csv"
+
+disc_data <- read_csv(discard_data_url) %>% 
+  clean_names()
+
+## How much of each species goes into each fishery
+fishery_table <- read_excel(here::here("data/datarepository.xlsm"), sheet = "FisheryTable") %>% 
+  clean_names() %>% 
+  select(id, country, fishery_name = name, fao_area, ocean, depth, location, target, target_species, vessel_length, gear, fish_stat)
+
+## Average landings (2010-2014) of each species by country
+fish_stat <- read_excel(here::here("data/datarepository.xlsm"), sheet = "FishStat") %>% 
+  clean_names() %>% 
+  select(fish_stat_id, country,fishing_area_name,fishing_area_code, spp_common, spp_scientific, spp_alpha, land_2014, land_avg_10_14)
+
+```
+
+
+## Idenfifying Fish Stat IDs
+
+Looking into Fishery Table to identify all the FishStat IDs and it's percentage that go into one fishery.
+
+```{r}
+fish_stat_codes <- fishery_table %>% 
+  mutate(fish_stat_vec = str_split(fish_stat, ";")) %>% 
+  unnest(fish_stat_vec) %>% 
+  filter(fish_stat_vec != "") %>% 
+  mutate(position = rep(c("fish_stat_id","pct"), times = n()/2),
+         category = rep(1:(n()/2), each = 2)) %>% 
+  pivot_wider(names_from = position,
+              values_from = fish_stat_vec) %>% 
+  select(-fish_stat, - category) %>% 
+  mutate(fish_stat_id = as.numeric(fish_stat_id),
+         country = case_when(country == "cabo verde" ~ "Cabo Verde",
+                             T ~ country)) %>% 
+  arrange(fish_stat_id)
+##Check all species sum to 100%
+check_pct <- fish_stat_codes %>% 
+  group_by(fish_stat_id) %>% 
+  mutate(pct = as.numeric(pct)) %>% 
+  summarise(pct_total = sum(pct)) %>% 
+  filter(pct_total < 100)
+##stat id 2786 (Artisanal shrimp from El Salvador) sums 10 probably its a typo mistake
+```
+
+## Matching 
+
+Note: not all species in fish stats are in the Fishery Table.
+
+```{r}
+fish_stat_allocated <- fish_stat_codes %>%
+  left_join(fish_stat, by = c("fish_stat_id", "country")) %>%
+  mutate_at(c("spp_common", "spp_alpha"), str_to_lower) %>%
+  filter(!fishing_area_name %in% c("Africa - Inland waters", "America, South - Inland waters", "Former USSR area - Inland waters", "Oceania - Inland waters", "America, North - Inland waters", "Asia - Inland waters", "Europe - Inland waters")) %>%
+  mutate(pct = as.numeric(pct),
+         catch_amount = land_avg_10_14 * pct / 100) %>%
+  select( -ocean, -target_species, -spp_scientific)
+```
+
+

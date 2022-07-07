@@ -1,0 +1,37 @@
+---
+title: "How to build a quarto website"
+format: html
+editor: visual
+---
+
+## How to build a Quarto website
+
+**Notes**
+
+Creating a website with QUARTO
+
+We have a repo
+
+Clone the repo to R studio
+
+Create project commands (<https://quarto.org/docs/websites/>)
+
+On the terminal, write the command for creating quarto website
+
+This gives us the structure of a Quarto website, all the minimum pieces it requires
+
+Talk about the structure  of the files, what did just happen!
+
+Each Qrmd is one page on out website
+
+In the quarto YML - brings all together (orchestra director)
+
+-   Add a new QurtoRmd
+
+Hosting in github pages
+
+-   We need a to follow s certain structure
+
+-   Move all files in \_my site into the main folder
+
+-   Move the quarto git ignore to the main git ignore
